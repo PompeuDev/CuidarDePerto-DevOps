@@ -1,0 +1,5 @@
+# Garante finais de linha LF nos scripts que rodam em Linux (evita erro "\r: command not found")
+*.sh   text eol=lf
+*.sql  text eol=lf
+Dockerfile text eol=lf
+*.yml  text eol=lf

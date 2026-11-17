@@ -1,0 +1,58 @@
+# Cuidar de Perto (CitizenTech) - Global Solution 2026/2 - DevOps Tools & Cloud Computing
+# Sobe a API .NET 8 e o banco Oracle Free, cada um em seu container, na mesma rede.
+name: cuidar-de-perto
+
+services:
+
+  # ---------------- Banco de dados (Oracle Database Free 23ai) ----------------
+  db:
+    image: gvenzl/oracle-free:23-slim
+    container_name: cuidar-db
+    restart: unless-stopped
+    environment:
+      ORACLE_PASSWORD: ${ORACLE_PASSWORD}          # senha dos usuários SYS/SYSTEM
+      APP_USER: ${APP_USER}                        # schema da aplicação (criado no FREEPDB1)
+      APP_USER_PASSWORD: ${APP_USER_PASSWORD}
+    volumes:
+      # VOLUME: persiste os dados do banco mesmo se o container for removido
+      - oracle-data:/opt/oracle/oradata
+      # Script que roda UMA vez, na primeira inicialização (cria tabelas e carga de dados)
+      - ./db/init/01_carregar_schema.sh:/container-entrypoint-initdb.d/01_carregar_schema.sh:ro
+      # SQL do projeto (pasta separada: a imagem executaria qualquer .sql do initdb.d como SYS)
+      - ./db/sql:/opt/cuidar-sql:ro
+    networks:
+      - cuidar-net
+    # Sem "ports": o banco NÃO é exposto na internet, só a API alcança (rede cuidar-net)
+    healthcheck:
+      test: ["CMD", "healthcheck.sh"]
+      interval: 10s
+      timeout: 5s
+      retries: 60
+      start_period: 30s
+
+  # ---------------- Aplicação (ASP.NET Core 8 + EF Core) ----------------
+  api:
+    build:
+      context: ./src/CuidarDePerto.Api
+      dockerfile: Dockerfile
+    image: cuidar-de-perto-api:1.0
+    container_name: cuidar-api
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy                 # só inicia depois que o banco estiver pronto
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      # Sobrescreve ConnectionStrings:OracleConnection do appsettings.json. Host "db" = nome do serviço.
+      ConnectionStrings__OracleConnection: "User Id=${APP_USER};Password=${APP_USER_PASSWORD};Data Source=db:1521/FREEPDB1"
+    ports:
+      - "80:8080"                                  # host:container -> http://IP-PUBLICO/swagger
+    networks:
+      - cuidar-net
+
+volumes:
+  oracle-data:
+
+networks:
+  cuidar-net:
+    driver: bridge
