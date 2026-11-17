@@ -22,7 +22,8 @@ services:
       - ./db/sql:/opt/cuidar-sql:ro
     networks:
       - cuidar-net
-    # Sem "ports": o banco NÃO é exposto na internet, só a API alcança (rede cuidar-net)
+    ports:
+      - "1521:1521"                                # host:container -> porta do Oracle (o NSG da VM só libera 22 e 80)
     healthcheck:
       test: ["CMD", "healthcheck.sh"]
       interval: 10s

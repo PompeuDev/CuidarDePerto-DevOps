@@ -37,7 +37,7 @@ flowchart LR
 |---|---|---|
 | Infraestrutura | Azure CLI | Grupo de recursos, VNet, NSG, IP público e VM (`azure/provisionar-vm.sh`) |
 | Aplicação | ASP.NET Core 8 + EF Core | Container `cuidar-api`, usuário não-root `cuidar`, `WORKDIR /app`, build multi-stage |
-| Banco | Oracle Database Free 23ai | Container `cuidar-db`, PDB `FREEPDB1`, **sem porta publicada** (só a API acessa) |
+| Banco | Oracle Database Free 23ai | Container `cuidar-db`, PDB `FREEPDB1`, porta `1521` configurada no Compose (o NSG da VM só libera 22 e 80) |
 | Persistência | Volume Docker `oracle-data` | Montado em `/opt/oracle/oradata` |
 | Orquestração | Docker Compose | Aplicação, banco, rede, volume, portas, variáveis de ambiente e `depends_on` com healthcheck |
 
@@ -114,6 +114,8 @@ Na primeira subida o Oracle cria o banco e executa `GlobalSolutionDB.sql`. Nas p
 | SELECT direto no banco | `docker exec -it cuidar-db bash -c 'sqlplus $APP_USER/$APP_USER_PASSWORD@//localhost/FREEPDB1'` e depois `SELECT * FROM T_CDP_IDOSO ORDER BY 1;` |
 | Persistência | cadastrar um idoso → `docker compose down` → `docker compose up -d` → o registro continua (`GET /api/Idoso` e `SELECT`) |
 | Volume | `docker volume ls` · `docker volume inspect cuidar-de-perto_oracle-data` |
+| Rede | `docker network ls` · `docker network inspect cuidar-de-perto_cuidar-net` |
+| Configuração do Compose | `docker compose config` · `docker compose top` |
 
 ## Endpoints da API
 | Recurso | Métodos |
@@ -133,7 +135,7 @@ Exemplo para `POST /api/Alerta` (use um `idosoId` existente, de 1 a 10 na carga 
 ## Segurança
 - Senhas fora do repositório: ficam no `.env` (ignorado pelo Git); o repositório traz só o `.env.example`.
 - Aplicação e banco rodam com usuários **não-root**.
-- O banco não publica a porta 1521; apenas a API o alcança, pela rede `cuidar-net`.
+- A porta 1521 do banco é configurada no Compose, mas o NSG da VM só libera 22 e 80: o banco não fica acessível pela internet e a API o alcança pela rede `cuidar-net`.
 - O NSG expõe somente as portas 22 (SSH) e 80 (HTTP).
 
 ## Problemas comuns
@@ -141,6 +143,7 @@ Exemplo para `POST /api/Alerta` (use um `idosoId` existente, de 1 a 10 na carga 
 |---|---|
 | `api` reinicia e o log mostra `ORA-12514` ou falha de conexão | O banco ainda não terminou de iniciar. Aguarde o `healthy` e confira `docker compose logs db`. |
 | Tabelas não existem | O script só roda com o volume vazio. Recrie o volume: `docker compose down -v && docker compose up -d`. **Apaga os dados.** |
+| `SP2-0734` / `ORA-00942` ao carregar o SQL | O SQL*Plus não aceita linhas em branco dentro de um comando. O script de init já usa `SET SQLBLANKLINES ON`; ao rodar o SQL manualmente, execute esse comando antes de `@GlobalSolutionDB.sql`. |
 | `\r: command not found` no log do banco | O `.sh` foi salvo com CRLF. Rode `sed -i 's/\r$//' db/init/01_carregar_schema.sh` e recrie o volume. |
 | `Permission denied` no Docker | Faltou sair e entrar de novo no SSH depois de `instalar-docker.sh`. |
 | `http://<IP>/swagger` não abre | Confirme a porta 80 no NSG (`az network nsg rule list -g rg-cuidardeperto-gs --nsg-name nsg-cuidardeperto -o table`) e use `http://`, não `https://`. |
