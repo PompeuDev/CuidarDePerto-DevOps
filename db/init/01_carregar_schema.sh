@@ -5,6 +5,7 @@
 echo "CUIDAR DE PERTO: criando tabelas, carga inicial e procedures no schema ${APP_USER}..."
 
 sqlplus -s "${APP_USER}/${APP_USER_PASSWORD}@//localhost/FREEPDB1" <<SQL
+SET SQLBLANKLINES ON
 WHENEVER SQLERROR CONTINUE
 SET SERVEROUTPUT ON
 @/opt/cuidar-sql/GlobalSolutionDB.sql
