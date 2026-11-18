@@ -3,7 +3,7 @@
 Solução para o acompanhamento de pessoas idosas: cadastro de idosos e registro de alertas de emergência. Nesta entrega a aplicação **.NET 8 (Advanced Business Development with .NET)** e o banco **Oracle (Mastering Relational and Non-Relational Database)** rodam em **dois containers Docker**, orquestrados por **Docker Compose**, dentro de uma **Máquina Virtual no Microsoft Azure provisionada por Azure CLI**.
 
 ## Vídeo de demonstração
-**YouTube (não listado):** `COLE_AQUI_O_LINK_DO_VIDEO`
+**YouTube (não listado):** 
 
 ## Integrantes — Turma 2TDSPR
 | Nome | RM |
