@@ -17,21 +17,6 @@ Solução para o acompanhamento de pessoas idosas: cadastro de idosos e registro
 ## Arquitetura
 ![Arquitetura da solução](docs/arquitetura.png)
 
-```mermaid
-flowchart LR
-    U[Navegador / Swagger] -->|HTTP :80| IP[IP público + NSG<br/>portas 80 e 22]
-    subgraph AZ[Azure - rg-cuidardeperto-gs]
-      IP --> VM
-      subgraph VM[VM Ubuntu 24.04 - Docker + Compose]
-        subgraph NET[rede cuidar-net]
-          API[cuidar-api<br/>.NET 8 + EF Core<br/>:8080]
-          DB[(cuidar-db<br/>Oracle Free 23ai<br/>:1521)]
-        end
-        API -->|SQL| DB
-        DB --- VOL[(volume oracle-data)]
-      end
-    end
-```
 
 | Componente | Tecnologia | Detalhes |
 |---|---|---|
