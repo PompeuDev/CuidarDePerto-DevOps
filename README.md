@@ -1,4 +1,4 @@
-# Cuidar de Perto (CitizenTech) — Global Solution 2026/2 · DevOps Tools & Cloud Computing
+# Cuidar de Perto — Global Solution 2026/2 · DevOps Tools & Cloud Computing
 
 Solução para o acompanhamento de pessoas idosas: cadastro de idosos e registro de alertas de emergência. Nesta entrega a aplicação **.NET 8 (Advanced Business Development with .NET)** e o banco **Oracle (Mastering Relational and Non-Relational Database)** rodam em **dois containers Docker**, orquestrados por **Docker Compose**, dentro de uma **Máquina Virtual no Microsoft Azure provisionada por Azure CLI**.
 
